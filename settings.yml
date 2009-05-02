@@ -1,0 +1,5 @@
+uploads:
+        max: 400
+        min: 100
+
+

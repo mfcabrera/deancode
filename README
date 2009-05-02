@@ -1,0 +1,11 @@
+=== GRIB DOWNLOADER
+
+
+This is a application to download grib files from nomads service, process them and
+put them into a database
+
+== DEPS
+libcurl-dev
+curb gem
+ccsv gem
+
