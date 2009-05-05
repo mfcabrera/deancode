@@ -1,5 +1,6 @@
-uploads:
-        max: 400
-        min: 100
+urlroot: http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl
+log_file: STDOUT
+log_level: DEBUG
+
 
 

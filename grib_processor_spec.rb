@@ -35,3 +35,10 @@ it "should scape the dashes when generating a grep command for the coordinates" 
 
   
 end
+
+
+describe GribDownloader do
+  before :each do 
+    @zone = ForecastZone.new("-77","-175","40","-75")
+        
+  end

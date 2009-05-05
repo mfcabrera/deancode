@@ -1,4 +1,4 @@
-=== GRIB DOWNLOADER
+= GRIB DOWNLOADER
 
 
 This is a application to download grib files from nomads service, process them and

@@ -29,10 +29,30 @@ require 'yaml'
 require 'curl'
 require 'logger'
 
-
-module MyLogger
+class  MyLogger
+include Singleton
   
+  def initialize(file="gribprocessor.log",level="info")
+    @logger = Logger.new(file, 'weekly')
+    @logger.level = eval("Logger::#{level.to_upper}")  
+  end
+
+  #I know there is a more elegant form of doing this
+  #But whatever... xD
+  
+  def debug(msg)
+    @logger.debug(msg)
+  end
+
+  def info(msg)
+    @logger.info(msg)
+  end
+
+  def error
+    @logger.error(msg)
+  end 
 end
+
 
 
 class String
@@ -97,9 +117,9 @@ class Point
   
   def[](index)
     if index == 0
-      @lat
-    elsif index == 1
       @lon
+    elsif index == 1
+      @lat
     else
       nil
     end
@@ -124,10 +144,10 @@ end
 
 
 class ForecastZone
-  attr_accessor :rlat,:llat,:rlon,:llon
+  attr_accessor :tlat,:blat,:rlon,:llon
   attr_accessor :utc_offset #0,3,6, etc
   
-  def initialize(rlat,llat,rlon,llon,utc_offset=0)
+  def initialize(tlat,blat,rlon,llon,utc_offset=0)
     (@rlat,@llat,@rlon,@llon) = rlat,llat,rlon,llon    
   end
   
@@ -144,30 +164,33 @@ end
 class GribDownloader
   
   def download_url
-       
-    
+           
   end
 
   def generate_url
     
-  end
-  
-  
-
- 
-  def initialize(zone)
-    @zone = zone
-    @filename =  "#{@zone.rlat}#{@zone.rlon}-#{@zone.llat}#{@zone.llon}-tz#{@zone.utc_offset}"
-  end
-
-  
-  def load_config(config_file)
-    yconfig = YAML.load_file(config_file)
-    @urlroot =  yconfig["urlroot"]    
+    @log.debug("Generating URL based on Zone definition")
+    utc = @zone.utc_offset > 10? zone : "0#{zone}"
+    
+    params ="?file=nww3.t#{utc}z.grib.grib2&lev_surface=on&all_var=on&leftlon=#{@zone.llon}&rightlon=#{@zone.rlon}&toplat=#{@zone.tlat}&bottomlat={@zone.blat}&dir=%2Fwave.#{@date}"
+    @log.debug(params)
     
   end
   
-  def download
+  #data in format YYYYMMDD
+  def initialize(zone,date)
+    @zone = zone
+    @filename =    "#{@zone.rlat}#{@zone.rlon}-#{@zone.llat}#{@zone.llon}-tz#{@zone.utc_offset}"
+    @yconfig = YAML.load_file(config_file)
+    @urlroot =  yconfig["urlroot"]    
+    loglevel  = yconfig["log_level"]
+    logfile = yconfig["log_file"]
+    @log = MyLogger.new(logfile,loglevel)    
+  end
+
+  
+
+  def download    
     
     url = "http://xue.unalmed.edu.co/~mfcabrera/ahijada.jpg" 
     c = Curl::Easy.new(url) do |curl|
@@ -177,24 +200,24 @@ class GribDownloader
     
     if c.response_code != 200
       #TODO: Log Here with the Logger.
-      puts "An error ocurred while downloading the grib file"
-      puts "The response code was #{c.response_code}"
-      puts "The url was: {@url}"      
+      @log.error("An error ocurred while downloading the grib file")
+      @log.error("The response code was #{c.response_code}")
+      @log.error("The url was: {@url}")      
       raise "Error downloading the grib file"
     end
     
     # Something went wrong if the downloaded bytes is not the same 
-    
+     
     if c.downloaded_content_length > 0 and c.downloaded_content_length !=  c.downloaded_bytes
       #TODO: downloaded bytes don't match.
-      puts "An error ocurred while downloading the grib file"
-      puts "The sizes does not match"
+      @log.error "An error ocurred while downloading the grib file"
+      @log.error "The sizes does not match"
       raise "Error downloading the grib file"
       
     end
     
     
-    puts "Saving file to disk"
+    @log.info "ALL - OK Saving file to disk"
     File.open(file_name,"w") { |o| o.write(c.body_str) } 
   end
 
