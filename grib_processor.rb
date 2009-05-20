@@ -1,4 +1,5 @@
 #!/usr/bin/ruby -w
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009 Miguel Cabrera
  
@@ -27,16 +28,27 @@ require 'rubygems'
 require 'ccsv'
 require 'yaml'
 require 'curl'
-require 'logger'
+require 'logger' 
+require 'singleton'
+
 
 class  MyLogger
-include Singleton
+  include Singleton
   
-  def initialize(file="gribprocessor.log",level="info")
-    @logger = Logger.new(file, 'weekly')
-    @logger.level = eval("Logger::#{level.to_upper}")  
+  #Move this were appropiate
+  def initialize
+    # if level not in ["info","debug","trace","error"]
+    # level = "info"
+    # end
+    @log_file = "gribprocessor.log"
+    @logger = Logger.new(@log_file, 'weekly')
+    @logger.level = Logger::INFO    
   end
-
+  
+  def level=(lv)
+    @logger.level = eval("Logger::#{lv.upcase}")    
+  end
+  
   #I know there is a more elegant form of doing this
   #But whatever... xD
   
@@ -48,7 +60,7 @@ include Singleton
     @logger.info(msg)
   end
 
-  def error
+  def error(msg)
     @logger.error(msg)
   end 
 end
@@ -76,6 +88,7 @@ class Wgrib2Frontend
   def initialize(filename,points)
     @points = points
     @filename = filename
+    @log = MyLogger.instance
   end
 
   
@@ -87,10 +100,12 @@ class Wgrib2Frontend
 
   def execute_wgrib2(out_filename)
     cmd = generate_command << " > #{out_filename}"
-    #puts cmd
+    @log.info("Executing: #{cmd}")
+
     unless system(cmd) 
       raise "Error creating .csv file" 
     end
+
     true             
   end
   
@@ -101,7 +116,7 @@ class Wgrib2Frontend
     size = @points.size
     ii = 1
     @points.each do |point|
-      egrep_line << "#{point[0].scape_dash},#{point[1].scape_dash}" 
+      egrep_line << "#{point[0].to_s.scape_dash},#{point[1].to_s.scape_dash}" 
       egrep_line << "|" if ii < size
       ii = ii + 1
     end
@@ -138,68 +153,71 @@ class Point
   
   def initialize(lat,lon)
     validate_params(lat,lon)
-    @lon,@lat = lon,lat    
+    @lon,@lat = lon,lat        
   end
 end
-
-
-class ForecastZone
-  attr_accessor :tlat,:blat,:rlon,:llon
-  attr_accessor :utc_offset #0,3,6, etc
   
-  def initialize(tlat,blat,rlon,llon,utc_offset=0)
-    (@rlat,@llat,@rlon,@llon) = rlat,llat,rlon,llon    
+  class ForecastZone
+  attr_accessor :tlat,:blat,:rlon,:llon
+  attr_accessor :utc_offset #00,06,12,18
+  
+  def initialize(tlat,blat,llon,rlon,utc_offset=0)
+    (@tlat,@blat,@rlon,@llon) = tlat,blat,rlon,llon    
+    if ![0,6,12,18].include?(utc_offset)
+      raise "Invalid UTC offset"
+    end
+    @utc_offset = utc_offset
   end
   
   def points=(pts)
     pts.each do |p|
-      if not ((llon..rlon).include?(p.lon))     
-        raise ("Invalid point for Forecast zone")
+        if not ((llon..rlon).include?(p.lon))     
+          raise ("Invalid point for Forecast zone")
+        end
+        #TODO: Write validation code for latitude
       end
-      #TODO: Write validation code for latitude
-    end
   end  
 end
 
 class GribDownloader
   
-  def download_url
-           
-  end
-
-  def generate_url
-    
-    @log.debug("Generating URL based on Zone definition")
-    utc = @zone.utc_offset > 10? zone : "0#{zone}"
-    
-    params ="?file=nww3.t#{utc}z.grib.grib2&lev_surface=on&all_var=on&leftlon=#{@zone.llon}&rightlon=#{@zone.rlon}&toplat=#{@zone.tlat}&bottomlat={@zone.blat}&dir=%2Fwave.#{@date}"
-    @log.debug(params)
-    
-  end
+  attr_reader :url
+  attr_reader :filename
   
-  #data in format YYYYMMDD
-  def initialize(zone,date)
+  
+  #date in format YYYYMMDD
+  def initialize(zone,date,config_file="settings.yml")
+    @date = date
     @zone = zone
-    @filename =    "#{@zone.rlat}#{@zone.rlon}-#{@zone.llat}#{@zone.llon}-tz#{@zone.utc_offset}"
+    @filename =  "data_#{@zone.tlat}_#{@zone.rlon}_#{@zone.blat}#{@zone.llon}_tz#{@zone.utc_offset}.grib2"
     @yconfig = YAML.load_file(config_file)
-    @urlroot =  yconfig["urlroot"]    
-    loglevel  = yconfig["log_level"]
-    logfile = yconfig["log_file"]
-    @log = MyLogger.new(logfile,loglevel)    
+    @urlroot =  @yconfig["urlroot"]    
+    loglevel  = @yconfig["log_level"]
+    logfile = @yconfig["log_file"]
+    @log = MyLogger.instance
+    @log.level = loglevel
+    @url = generate_url    
+    
+    @log.debug("Filename: #{filename}")
+
   end
 
   
 
   def download    
     
-    url = "http://xue.unalmed.edu.co/~mfcabrera/ahijada.jpg" 
-    c = Curl::Easy.new(url) do |curl|
-      curl.verbose = true
-    end
+    # url = "http://xue.unalmed.edu.co/~mfcabrera/ahijada.jpg" 
+    
+    c = Curl::Easy.new(@url) do |curl|
+        curl.verbose = true
+      end
+    
+    
+    @log.info("Dowloading #{@url}")
     c.perform 
     
+    
     if c.response_code != 200
-      #TODO: Log Here with the Logger.
       @log.error("An error ocurred while downloading the grib file")
       @log.error("The response code was #{c.response_code}")
       @log.error("The url was: {@url}")      
@@ -218,13 +236,32 @@ class GribDownloader
     
     
     @log.info "ALL - OK Saving file to disk"
-    File.open(file_name,"w") { |o| o.write(c.body_str) } 
+    File.open(@filename,"w") { |o| o.write(c.body_str) } 
+    @log.info "File saved correctly"
+    
   end
-
-
   
+  private
+  def generate_url
+    
+    @log.debug("Generating URL based on Zone definition")
+    utc = @zone.utc_offset > 10? @zone.utc_offset : "0#{@zone.utc_offset}"
+        
+    rlon = @zone.rlon.to_i > 0? @zone.rlon.to_i: @zone.rlon.to_i + 360
+    llon = @zone.llon.to_i > 0? @zone.llon.to_i: @zone.llon.to_i + 360
+    
+    
 
+    params ="?file=nww3.t#{utc}z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=#{llon}&rightlon=#{rlon}&toplat=#{@zone.tlat}&bottomlat=#{@zone.blat}&dir=%2Fwave.#{@date}"
+    @log.debug(params)
+    url = "#{@urlroot}#{params}"
+    @log.debug(url)
+    url
+    
+  end    
 end
+
+
 
 
 class WaveCsvReader

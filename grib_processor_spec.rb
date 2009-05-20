@@ -1,4 +1,5 @@
 #!/usr/bin/ruby
+# -*- coding: utf-8 -*-
 
 require 'grib_processor'
 
@@ -12,19 +13,19 @@ require 'grib_processor'
 
 describe Wgrib2Frontend  do
   before :each do
-    @filename="/home/mfcabrera/code/nww3.t00z.grib.grib2"
-    points = [["165","-77"],["40","-75"]]
+    @filename="/home/mfcabrera/Escritorio/nww3.t18z.grib.grib2"
+    points = [["151.25","-34"],["152.5","-34"]]
     @wgrib2 = Wgrib2Frontend.new(@filename,points)
   end
 
   
 it "should scape the dashes when generating a grep command for the coordinates" do
-    @wgrib2.generate_grep_command.should == "egrep \"165,\\-77|40,\\-75\"" 
+    @wgrib2.generate_grep_command.should == "egrep \"151.25,\\-34|152.5,\\-34\"" 
  #   puts @wgrib2.generate_grep_command
   end
   
   it "Should filter the locations I want from the wgrib2 command" do
-    @wgrib2.generate_command.should == "wgrib2 #{@filename} -csv -| egrep \"165,\\-77|40,\\-75\""
+    @wgrib2.generate_command.should == "wgrib2 #{@filename} -csv -| egrep \"151.25,\\-34|152.5,\\-34\""  
   end
   
   it "Should output a csv file" do
@@ -32,13 +33,34 @@ it "should scape the dashes when generating a grep command for the coordinates" 
     @wgrib2.execute_wgrib2(out_file).should == true
     File.exist?(File.expand_path(out_file)).should == true
   end
-
-  
+ 
 end
 
 
 describe GribDownloader do
-  before :each do 
-    @zone = ForecastZone.new("-77","-175","40","-75")
-        
+  before :each do #top bottom left right
+    @date = "20090518"
+    
   end
+    
+  
+  it "Should generate the url based in the date and the forecast zone for TZ06" do
+    @zone = ForecastZone.new("-33","-35","150","153",6)
+    @gd = GribDownloader.new(@zone,@date)    
+    
+    @gd.url.should ==  "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t06z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=153&toplat=-33&bottomlat=-35&dir=%2Fwave.20090518"
+  
+  end
+
+    it "Should generate the url based in the date and the forecast zone for  TZ12" do
+    @zone = ForecastZone.new("-33","-35","150","153",12)
+    @gd = GribDownloader.new(@zone,@date)    
+  
+    @gd.url.should == "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t12z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=153&toplat=-33&bottomlat=-35&dir=%2Fwave.20090518"
+  end
+  
+  
+end
+
+  
+ 
