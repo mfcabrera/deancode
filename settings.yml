@@ -1,6 +1,7 @@
 urlroot: http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl
 log_file: STDOUT
 log_level: DEBUG
-
+wgrib2_path: /usr/bin
+wgrib2_name: wgrib2
 
 

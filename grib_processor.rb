@@ -32,20 +32,26 @@ require 'logger'
 require 'singleton'
 
 
+
 class  MyLogger
   include Singleton
   
   #Move this were appropiate
   def initialize
-    # if level not in ["info","debug","trace","error"]
-    # level = "info"
-    # end
-    @log_file = "gribprocessor.log"
-    @logger = Logger.new(@log_file, 'weekly')
-    @logger.level = Logger::INFO    
+    @yconfig = YAML.load_file("settings.yml")
+    @log_file =  @yconfig["log_file"]
+    if @log_file == "STDOUT"
+      @logger = Logger.new(STDOUT, 'weekly')
+    else
+      @logger = Logger.new(@log_file, 'weekly')
+    end
+    @logger.level = Logger::INFO   
   end
   
   def level=(lv)
+    if not ["info","debug","trace","error"].include?(lv)
+      lv="info"
+    end
     @logger.level = eval("Logger::#{lv.upcase}")    
   end
   
@@ -89,10 +95,14 @@ class Wgrib2Frontend
     @points = points
     @filename = filename
     @log = MyLogger.instance
+    
   end
 
   
   def generate_command
+    yconfig = YAML.load_file("settings.yml")
+    exe = "#{yconfig['wgrib_path']}/#{yconfig['wgrib_name']}"
+    raise "wgrib path does not exists - check settings.yml" if not File.exist?(exe)
     command = "wgrib2 #{@filename} -csv -| "    
     command << generate_grep_command       
   end
@@ -102,6 +112,7 @@ class Wgrib2Frontend
     cmd = generate_command << " > #{out_filename}"
     @log.info("Executing: #{cmd}")
 
+    #FIXME: Use Open4 to get the data and save it directly
     unless system(cmd) 
       raise "Error creating .csv file" 
     end
@@ -189,7 +200,7 @@ class GribDownloader
   def initialize(zone,date,config_file="settings.yml")
     @date = date
     @zone = zone
-    @filename =  "data_#{@zone.tlat}_#{@zone.rlon}_#{@zone.blat}#{@zone.llon}_tz#{@zone.utc_offset}.grib2"
+    @filename =  "data_#{@zone.tlat}_#{@zone.rlon}_#{@zone.blat}_#{@zone.llon}_tz#{@zone.utc_offset}.grib2"
     @yconfig = YAML.load_file(config_file)
     @urlroot =  @yconfig["urlroot"]    
     loglevel  = @yconfig["log_level"]
@@ -244,18 +255,16 @@ class GribDownloader
   private
   def generate_url
     
-    @log.debug("Generating URL based on Zone definition")
+    @log.info("Generating URL based on Zone definition")
     utc = @zone.utc_offset > 10? @zone.utc_offset : "0#{@zone.utc_offset}"
         
     rlon = @zone.rlon.to_i > 0? @zone.rlon.to_i: @zone.rlon.to_i + 360
     llon = @zone.llon.to_i > 0? @zone.llon.to_i: @zone.llon.to_i + 360
     
-    
-
     params ="?file=nww3.t#{utc}z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=#{llon}&rightlon=#{rlon}&toplat=#{@zone.tlat}&bottomlat=#{@zone.blat}&dir=%2Fwave.#{@date}"
-    @log.debug(params)
+    @log.debug("Parameters for grib filter #{params}")
     url = "#{@urlroot}#{params}"
-    @log.debug(url)
+    @log.debug("URL generated: #{url}")
     url
     
   end    
