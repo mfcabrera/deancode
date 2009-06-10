@@ -13,9 +13,10 @@ require 'grib_processor'
 
 describe Wgrib2Frontend  do
   before :each do
+    @outfile = "outfile.csv"
     @filename="data_-33_152_-35_150_tz6.grib2"
     points = [["151.25","-34"],["152.5","-34"]]
-    @wgrib2 = Wgrib2Frontend.new(@filename,points)
+    @wgrib2 = Wgrib2Frontend.new(@filename,points,@outfile)
   end
 
   
@@ -29,9 +30,9 @@ it "should scape the dashes when generating a grep command for the coordinates" 
   end
   
   it "Should output a csv file" do
-    out_file = "~/outtest.csv"
-    @wgrib2.execute_wgrib2(out_file).should == true
-    File.exist?(File.expand_path(out_file)).should == true
+    
+    @wgrib2.execute_wgrib2.should == true
+    File.exist?(File.expand_path(@outfile)).should == true
   end
  
 end

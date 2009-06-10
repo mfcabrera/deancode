@@ -30,14 +30,16 @@ require 'yaml'
 require 'curl'
 require 'logger' 
 require 'singleton'
+require 'sequel'
+require 'faster_csv'
 
 
-
-class  MyLogger
+class MyLogger
   include Singleton
   
   #Move this were appropiate
   def initialize
+  
     @yconfig = YAML.load_file("settings.yml")
     @log_file =  @yconfig["log_file"]
     if @log_file == "STDOUT"
@@ -46,29 +48,23 @@ class  MyLogger
       @logger = Logger.new(@log_file, 'weekly')
     end
     @logger.level = Logger::INFO   
+  
   end
   
   def level=(lv)
-    if not ["info","debug","trace","error"].include?(lv)
-      lv="info"
+    
+    lv.upcase!
+    if not ["INFO","DEBUG","TRACE","ERROR"].include?(lv)
+      lv="INFO"
     end
-    @logger.level = eval("Logger::#{lv.upcase}")    
+    @logger.level = eval("Logger::#{lv}")    
   end
   
-  #I know there is a more elegant form of doing this
-  #But whatever... xD
   
-  def debug(msg)
-    @logger.debug(msg)
+  def method_missing(sym, *args, &block)
+    @logger.send sym, *args 
   end
-
-  def info(msg)
-    @logger.info(msg)
-  end
-
-  def error(msg)
-    @logger.error(msg)
-  end 
+  
 end
 
 
@@ -91,10 +87,11 @@ class Wgrib2Frontend
   #and helps to filter out information from
   #grib2 files  
   
-  def initialize(filename,points)
+  def initialize(filename,points,outfile)
     @points = points
     @filename = filename
     @log = MyLogger.instance
+    @outfile = outfile
     
   end
 
@@ -108,8 +105,8 @@ class Wgrib2Frontend
   end
   
 
-  def execute_wgrib2(out_filename)
-    cmd = generate_command << " > #{out_filename}"
+  def execute_wgrib2
+    cmd = generate_command << " > #{@outfile}"
     @log.info("Executing: #{cmd}")
 
     #FIXME: Use Open4 to get the data and save it directly
@@ -268,6 +265,41 @@ class GribDownloader
     url
     
   end    
+end
+
+
+
+
+
+
+class GribDataImporter
+  # This class  Imports data from CSV files into
+  # The database
+  
+  def initialize
+    Sequel.datetime_class = DateTime
+    @DB = Sequel.sqlite('gribdata.db')           
+  end
+  
+  #Read from a CSV file
+  def load_from_file(file)
+    FasterCSV.foreach(file, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
+      insert_forecast row
+    end    
+  end
+    
+  def insert_forecast(data)    
+    dataset = @DB[:forecasts]
+    dataset.insert(:grib_date => data[0],
+                   :forecast_date => data[1],
+                   :var_name => data[2],
+                   :lat => data[5],
+                   :lon => data[4],
+                   :value => data[6]
+                   )
+  end
+  
+  
 end
 
 
