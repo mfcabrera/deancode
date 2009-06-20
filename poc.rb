@@ -1,6 +1,6 @@
 
 
-require "grib_processor.rb"
+require "forecast_downloader"
 include ForecastDownloader
 
 def main1
@@ -8,7 +8,7 @@ def main1
   point2 = [-34,151.25]
   
   zone = ForecastZone.new("-32","-35","150","153",6)
-  gd = GribDownloader.new(zone,"20090621","settings.yml")
+  gd = GribDownloader.new(zone,"20090621")
   filename = gd.filename
   gd.download  
   wg = Wgrib2Frontend.new(filename,[point1,point2],"out.csv")

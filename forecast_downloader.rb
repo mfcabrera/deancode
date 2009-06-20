@@ -245,37 +245,37 @@ end
 
 
 
-
+  
   class GribDataImporter
-  # This class  Imports data from CSV files into
-  # The database
+    # This class  Imports data from CSV files into
+    # The database
     
     def initialize
       Sequel.datetime_class = DateTime
       
       @DB = Sequel.connect(YAML.load_file(SETTINGS_FILE)["db"])           
-      
+    end
       #Read from a CSV file
-      def load_from_file(file)
-        FasterCSV.foreach(file, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
-          insert_forecast row
-        end    
-      end
-      
-      def insert_forecast(data)    
-        dataset = @DB[:forecasts]
-        dataset.insert(:grib_date => data[0],
-                       :forecast_date => data[1],
-                       :var_name => data[2],
-                       :lat => data[5],
-                       :lon => data[4],
-                       :value => data[6]
-                       )
-      end
-      
-      
+    def load_from_file(file)
+      FasterCSV.foreach(file, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
+        insert_forecast row
+      end    
     end
     
+    def insert_forecast(data)    
+      dataset = @DB[:forecasts]
+      dataset.insert(:grib_date => data[0],
+                     :forecast_date => data[1],
+                       :var_name => data[2],
+                     :lat => data[5],
+                     :lon => data[4],
+                     :value => data[6]
+                       )
+    end
+    
+    
   end
-  
-  
+    
+end
+
+

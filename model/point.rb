@@ -10,8 +10,9 @@ module ForecastDownloader
   CONNECTION_STRING = YAML.load_file(File.dirname(__FILE__)+ "/../settings.yml")["db"]
 
   DB = Sequel.connect(CONNECTION_STRING)
-  class Point  < Sequel::Model(:forecast_points)
-
+  puts CONNECTION_STRING
+    class Point  < Sequel::Model(:forecast_points)
+      
     def[](index)
       if index == 0
         @lon

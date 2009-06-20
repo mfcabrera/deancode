@@ -9,5 +9,5 @@ end
 
 desc "Run spec test"
 task :test  do
-  sh 'spec -f s grib_processor_spec.rb'
+  sh 'spec -f s forecast_downloader_spec.rb'
 end

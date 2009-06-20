@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8 -*-
 
-require 'grib_processor'
+require 'forecast_downloader'
 include ForecastDownloader
 
 
@@ -15,7 +15,7 @@ describe Wgrib2Frontend  do
   before :each do
     @outfile = "outfile.csv"
     @filename="data_-33_152_-35_150_tz6.grib2"
-    points = [["151.25","-34"],["152.5","-34"]]
+    points = [["-34","151.25"],["-34","152.5"]]
     @wgrib2 = Wgrib2Frontend.new(@filename,points,@outfile)
   end
 
@@ -56,7 +56,7 @@ describe GribDownloader do
     it "Should generate the url based in the date and the forecast zone for  TZ12" do
     @zone = ForecastZone.new("-33","-35","150","154",12)
     @gd = GribDownloader.new(@zone,@date)    
-  
+    
     @gd.url.should == "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t12z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=154&toplat=-33&bottomlat=-35&dir=%2Fwave.#{@date}"
   end
   
