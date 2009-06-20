@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 require 'grib_processor'
-
+include ForecastDownloader
 
 
 #
