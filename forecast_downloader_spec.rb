@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 require 'forecast_downloader'
+require 'model/point'
+require 'sequel'
+require 'yaml'
+require 'sequel/extensions/migration'
 include ForecastDownloader
 
 
@@ -50,7 +54,8 @@ describe GribDownloader do
     @gd = GribDownloader.new(@zone,@date)    
     
     @gd.url.should ==  "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t06z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=154&toplat=-33&bottomlat=-35&dir=%2Fwave.#{@date}"
-  
+
+
   end
 
     it "Should generate the url based in the date and the forecast zone for  TZ12" do
@@ -64,4 +69,33 @@ describe GribDownloader do
 end
 
   
- 
+describe ForecastDownloader do
+  before :each do
+    DB = Sequel.connect YAML.load_file(ForecastDownloader::SETTINGS_FILE)["db"]["test"]
+    Sequel::Migrator.apply(DB, "migration/") 
+    migrator = Sequel::Migrator.new(DB)
+    migrator.down
+    migrator.up
+    #FIXME: Move me to somewhere else.
+    
+    dataset = DB[:forecast_points]
+    dataset.insert(:id => 1,
+                    :lat => "-34",
+                   :lon => "151.25",
+                   :name => "ISLAND ONE"
+                   )
+    dataset.insert(:id => 2,
+                   :lat => "-34",
+                   :lon => "153.5",
+                    :name => "ISLAND TWO"
+                    )
+    dataset.insert(:id => 3,
+                   :lat => "-40",
+                   :lon => "145.25",
+                   :name => "ISLAND 3"
+                    )
+  end
+
+  
+
+end

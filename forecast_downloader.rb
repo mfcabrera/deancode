@@ -52,8 +52,8 @@ class MyLogger
   
   #Move this were appropiate
   def initialize
-  
-    yconfig = YAML.load_file(SETTINGS_FILE)
+    
+    yconfig =  YAML.load_file(SETTINGS_FILE)
     @log_file =  yconfig["log_file"]
     if @log_file == "STDOUT"
       @logger = Logger.new(STDOUT, 'weekly')
@@ -100,8 +100,8 @@ class Wgrib2Frontend
   end
 
   
-  def generate_command
-    yconfig = YAML.load_file(SETTINGS_FILE)
+  def generate_command(config={})
+    yconfig =  YAML.load_file(SETTINGS_FILE).merge!(config)
     exe = "#{yconfig['wgrib_path']}/#{yconfig['wgrib_name']}"
     raise "wgrib path does not exists - check settings.yml" if not File.exist?(exe)
     command = "wgrib2 #{@filename} -csv -| "    
@@ -113,7 +113,7 @@ class Wgrib2Frontend
     cmd = generate_command << " > #{@outfile}"
     @log.info("Executing: #{cmd}")
 
-    #FIXME: Use Open4 to get the data and save it directly
+    #FIXME: Use Open4 to get the  data and save it directly
     unless system(cmd) 
       raise "Error creating .csv file" 
     end
@@ -168,11 +168,11 @@ class GribDownloader
   
   
   #date in format YYYYMMDD
-  def initialize(zone,date)
+  def initialize(zone,date,config={})
     @date = date
     @zone = zone
     @filename =  "data_#{@zone.tlat}_#{@zone.rlon}_#{@zone.blat}_#{@zone.llon}_tz#{@zone.utc_offset}.grib2"
-    yconfig = YAML.load_file(SETTINGS_FILE)
+    yconfig = YAML.load_file(SETTINGS_FILE).merge!(config) 
     @urlroot =  yconfig["urlroot"]    
     loglevel  = yconfig["log_level"]
     logfile = yconfig["log_file"]
@@ -263,19 +263,51 @@ end
     end
     
     def insert_forecast(data)    
-      dataset = @DB[:forecasts]
-      dataset.insert(:grib_date => data[0],
+      @dataset = @DB[:forecasts]
+      @dataset.insert(:grib_date => data[0],
                      :forecast_date => data[1],
-                       :var_name => data[2],
+                     :var_name => data[2],
                      :lat => data[5],
                      :lon => data[4],
                      :value => data[6]
-                       )
+                     )
     end
     
     
   end
     
+
+  class ForecastDownloader
+    
+    #this methods find the area from the list of points 
+    #it takes the minimum and the maximum latitude and longitude
+    #and creates a square that is passed to the download area.
+    
+    
+    def perform(utc=0)
+        
+      #Que the list of points
+      @points = Model::Point.find_all
+           
+      # zone = ForecastZone.new("-32","-35","150","153",6)
+#       gd = GribDownloader.new(zone,"20090621")
+#       filename = gd.filename
+#       gd.download  
+#       wg = Wgrib2Frontend.new(filename,[point1,point2],"out.csv")
+#       wg.execute_wgrib2
+#       gdi = GribDataImporter.new
+#       gdi.load_from_file("out.csv")
+      
+    end
+
+    private 
+    def find_area_from_points
+      
+    end
+    
+    
+  end
+  
 end
 
 

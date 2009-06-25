@@ -5,7 +5,10 @@ task :setup => [:migrate]
 desc "DB Migration for the grib data fetcher"
 task :migrate  do
   system %{sequel -E  -m migrations/   sqlite://gribdata.db}
+  system %{sequel -E  -m migrations/   sqlite://gribdata-test.db}
 end
+
+
 
 desc "Run spec test"
 task :test  do
