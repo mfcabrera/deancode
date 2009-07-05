@@ -120,6 +120,17 @@ class Wgrib2Frontend
 
     true             
   end
+
+  def format_number(num)
+    fn = num.to_f
+    int = num.to_i
+    res = fn-int
+    if res > 0
+      fn
+    else
+      int
+    end    
+  end
   
   def generate_grep_command
     
@@ -128,10 +139,15 @@ class Wgrib2Frontend
     size = @points.size
     ii = 1
     @points.each do |point|
-      egrep_line << "#{point[1].to_s.scape_dash},#{point[0].to_s.scape_dash}" 
-      egrep_line << "|" if ii < size
-      ii = ii + 1
-    end
+        # If the numbers is a float but is also a integer, example 34.0. We
+        # should remove the trailing .0
+        point0 = format_number(point[0])
+        point1 = format_number(point[1])       
+        
+        egrep_line << "#{point1.to_s.scape_dash},#{point0.to_s.scape_dash}" 
+        egrep_line << "|" if ii < size
+        ii = ii + 1
+      end
     
     egrep_line << "\""
     
@@ -144,8 +160,8 @@ class ForecastZone
   attr_accessor :utc_offset #00,06,12,18
   
   def initialize(tlat,blat,llon,rlon,utc_offset=0)
-    (@tlat,@blat,@rlon,@llon) = tlat,blat,rlon,llon    
-    if ![0,6,12,18].include?(utc_offset)
+    (@tlat,@blat,@rlon,@llon) = tlat.to_i,blat.to_i,rlon.to_i,llon.to_i
+    if not [0,6,12,18].include?(utc_offset)
       raise "Invalid UTC offset"
     end
     @utc_offset = utc_offset
@@ -178,7 +194,8 @@ class GribDownloader
     logfile = yconfig["log_file"]
     @log = MyLogger.instance
     @log.level = loglevel
-    @url = generate_url    
+    @url = generate_url 
+    @log.debug("URL Generarted: {@url}")
     
     @log.debug("Filename: #{filename}")
 
@@ -202,8 +219,8 @@ class GribDownloader
     if c.response_code != 200
       @log.error("An error ocurred while downloading the grib file")
       @log.error("The response code was #{c.response_code}")
-      @log.error("The url was: {@url}")      
-      raise "Error downloading the grib file"
+      @log.error("The url was: #{@url}")      
+      raise "Error downloading the grib file"      
     end
     
     # Something went wrong if the downloaded bytes is not the same 
@@ -228,6 +245,8 @@ class GribDownloader
     
     @log.info("Generating URL based on Zone definition")
     utc = @zone.utc_offset > 10? @zone.utc_offset : "0#{@zone.utc_offset}"
+    @log.debug("Generating url for UTC #{@zone.utc_offset}")
+    
         
     rlon = @zone.rlon.to_i > 0? @zone.rlon.to_i: @zone.rlon.to_i + 360
     llon = @zone.llon.to_i > 0? @zone.llon.to_i: @zone.llon.to_i + 360
@@ -251,19 +270,27 @@ end
     # The database
     
     def initialize
+      @log = MyLogger.instance
       Sequel.datetime_class = DateTime
+      yconfig =  YAML.load_file(SETTINGS_FILE)
+      @DB =  Sequel.connect(yconfig["db"]["test"],:logger => Logger.new(yconfig["db_log_file"]))           
       
-      @DB = Sequel.connect(YAML.load_file(SETTINGS_FILE)["db"])           
+      
+      @dataset = @DB[:forecasts]            
     end
       #Read from a CSV file
     def load_from_file(file)
+      @log.info("Deleting previous forecasts from forecast table")
+      @dataset.delete
+      @log.info("Loading new forecasts from file: #{file}")
       FasterCSV.foreach(file, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
         insert_forecast row
       end    
+      @log.info ("File loaded correctly. #{@dataset.count} forecasts inserted." )
     end
     
     def insert_forecast(data)    
-      @dataset = @DB[:forecasts]
+      
       @dataset.insert(:grib_date => data[0],
                      :forecast_date => data[1],
                      :var_name => data[2],
@@ -277,35 +304,54 @@ end
   end
     
 
-  class ForecastDownloader
+  class Processor
     
     #this methods find the area from the list of points 
     #it takes the minimum and the maximum latitude and longitude
     #and creates a square that is passed to the download area.
+
+    def initialize
+    end
     
     
-    def perform(utc=0)
+    def perform(utc=0,date=nil)
         
       #Que the list of points
       @points = Model::Point.find_all
-           
+      
+      max_lon = Model::Point.max_lon.to_f + 1
+      min_lon = Model::Point.min_lon.to_f - 1
+      max_lat = Model::Point.max_lat.to_f + 1
+      min_lat = Model::Point.min_lat.to_f - 1
+      
+      zone = ForecastZone.new(max_lat,min_lat,min_lon,max_lon,utc) 
+      date = date || Date.today.strftime("%Y%m%d")
+      gd = GribDownloader.new(zone,date)
+      filename = gd.filename
+      gd.download
+
+      
+      
+      wg = Wgrib2Frontend.new(filename,Model::Point.find_all.to_a,"#{filename}.csv")
+      wg.execute_wgrib2      
+      gdi = GribDataImporter.new
+      gdi.load_from_file("#{filename}.csv")
+      
+            
+      #What? FIXME?
+      #what about the order?
+      
+      
       # zone = ForecastZone.new("-32","-35","150","153",6)
-#       gd = GribDownloader.new(zone,"20090621")
+      #       gd = GribDownloader.new(zone,"20090621")
 #       filename = gd.filename
 #       gd.download  
 #       wg = Wgrib2Frontend.new(filename,[point1,point2],"out.csv")
 #       wg.execute_wgrib2
-#       gdi = GribDataImporter.new
-#       gdi.load_from_file("out.csv")
       
-    end
-
-    private 
-    def find_area_from_points
+#     
       
-    end
-    
-    
+    end        
   end
   
 end

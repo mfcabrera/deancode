@@ -7,8 +7,8 @@ class CreatePointsDataTable < Sequel::Migration
     Sequel.datetime_class = DateTime    
     create_table :forecast_points do
       primary_key :id
-      String :lat
-      String :lon
+      Float  :lat
+      Float  :lon
       String :name
     end    
   end

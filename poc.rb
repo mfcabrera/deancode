@@ -1,7 +1,5 @@
-
-
-require "forecast_downloader"
-include ForecastDownloader
+require 'forecast_downloader'
+require 'model/point'
 
 def main1
   point1 = [-33,150]
@@ -18,5 +16,10 @@ def main1
   
 end
 
+def main2
+  fd = Processor.new
+  fd.perform
+end
 
-main1
+
+main2

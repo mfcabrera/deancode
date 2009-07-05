@@ -6,6 +6,7 @@ require 'model/point'
 require 'sequel'
 require 'yaml'
 require 'sequel/extensions/migration'
+require 'logger'
 include ForecastDownloader
 
 
@@ -54,48 +55,50 @@ describe GribDownloader do
     @gd = GribDownloader.new(@zone,@date)    
     
     @gd.url.should ==  "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t06z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=154&toplat=-33&bottomlat=-35&dir=%2Fwave.#{@date}"
-
-
+    
+    
   end
-
-    it "Should generate the url based in the date and the forecast zone for  TZ12" do
+  
+  it "Should generate the url based in the date and the forecast zone for  TZ12" do
     @zone = ForecastZone.new("-33","-35","150","154",12)
     @gd = GribDownloader.new(@zone,@date)    
     
     @gd.url.should == "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t12z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=154&toplat=-33&bottomlat=-35&dir=%2Fwave.#{@date}"
   end
+
+  it "Should convert the decimal values of the zone description to integers" do
+    @zone = ForecastZone.new("-33.5","-35.0","150","154",6)
+    @gd = GribDownloader.new(@zone,@date)    
+    
+    @gd.url.should ==  "http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl?file=nww3.t06z.grib.grib2&lev_surface=on&all_var=on&subregion=&leftlon=150&rightlon=154&toplat=-33&bottomlat=-35&dir=%2Fwave.#{@date}"
+    
+    
+  end
+
   
   
 end
 
   
 describe ForecastDownloader do
-  before :each do
-    DB = Sequel.connect YAML.load_file(ForecastDownloader::SETTINGS_FILE)["db"]["test"]
-    Sequel::Migrator.apply(DB, "migration/") 
-    migrator = Sequel::Migrator.new(DB)
-    migrator.down
-    migrator.up
-    #FIXME: Move me to somewhere else.
     
-    dataset = DB[:forecast_points]
-    dataset.insert(:id => 1,
-                    :lat => "-34",
-                   :lon => "151.25",
-                   :name => "ISLAND ONE"
-                   )
-    dataset.insert(:id => 2,
-                   :lat => "-34",
-                   :lon => "153.5",
-                    :name => "ISLAND TWO"
-                    )
-    dataset.insert(:id => 3,
-                   :lat => "-40",
-                   :lon => "145.25",
-                   :name => "ISLAND 3"
-                    )
+  
+  before :each do
+    
   end
-
+  
+  it "Should download the data for today" do
+    
+    max_lon = Model::Point.max_lon.to_s
+    min_lon = Model::Point.min_lon.to_s
+    max_lat = Model::Point.max_lat.to_s
+    min_lat = Model::Point.min_lat.to_s
+    
+    (max_lon == "153.5" and min_lon == "145.25" and max_lat == "-34.0" and  min_lat == "-40.0").should == true
+  end
+  
   
 
 end
+
+

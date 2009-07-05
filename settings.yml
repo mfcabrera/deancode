@@ -1,6 +1,6 @@
 env: test
 urlroot: http://nomads.ncep.noaa.gov/cgi-bin/filter_wave.pl
-log_file: STDOUT
+log_file: log/forecast_downloader.log
 log_level: DEBUG
 wgrib2_path: /usr/bin
 wgrib2_name: wgrib2
@@ -8,5 +8,5 @@ db:
         dev: sqlite://gribdata.db 
         test: sqlite://gribdata-test.db
         prod: sqlite://gribdata-prod.db
-
+db_log_file: log/sequel.log
     
