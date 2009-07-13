@@ -34,10 +34,15 @@ require 'faster_csv'
 
 
 
-
+#Some Monkey Patches for String
 class String
   def scape_dash
     self.sub("-","\\-")
+  end
+
+
+  def is_int?
+    self =~ /^[-+]?[0-9]*$/
   end
 end
 
@@ -112,6 +117,7 @@ class Wgrib2Frontend
   def execute_wgrib2
     cmd = generate_command << " > #{@outfile}"
     @log.info("Executing: #{cmd}")
+    
 
     #FIXME: Use Open4 to get the  data and save it directly
     unless system(cmd) 
@@ -286,7 +292,7 @@ end
       FasterCSV.foreach(file, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
         insert_forecast row
       end    
-      @log.info ("File loaded correctly. #{@dataset.count} forecasts inserted." )
+      @log.info("File loaded correctly. #{@dataset.count} forecasts inserted." )
     end
     
     def insert_forecast(data)    
@@ -331,26 +337,12 @@ end
       gd.download
 
       
-      
       wg = Wgrib2Frontend.new(filename,Model::Point.find_all.to_a,"#{filename}.csv")
       wg.execute_wgrib2      
       gdi = GribDataImporter.new
       gdi.load_from_file("#{filename}.csv")
       
-            
-      #What? FIXME?
-      #what about the order?
-      
-      
-      # zone = ForecastZone.new("-32","-35","150","153",6)
-      #       gd = GribDownloader.new(zone,"20090621")
-#       filename = gd.filename
-#       gd.download  
-#       wg = Wgrib2Frontend.new(filename,[point1,point2],"out.csv")
-#       wg.execute_wgrib2
-      
-#     
-      
+         
     end        
   end
   

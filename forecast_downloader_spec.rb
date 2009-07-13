@@ -45,7 +45,7 @@ end
 
 describe GribDownloader do
   before :each do #top bottom left right
-    @date = "20090520"
+    @date = Date.today.strftime("%Y%m%d")
     
   end
     

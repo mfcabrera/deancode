@@ -1,1 +1,0 @@
- wgrib2 nww3.t00z.grib.back -csv - | egrep "\-173.75\,\-68|155\,\-68" 
