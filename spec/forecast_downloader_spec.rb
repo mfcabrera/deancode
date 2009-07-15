@@ -80,21 +80,25 @@ describe GribDownloader do
 end
 
   
-describe ForecastDownloader do
+describe Model::Point do
     
   
   before :each do
-    
+    Model::Point.delete
+    Model::Point.insert(:lon=>"150",:lat=>"-33.0",:name=>"ISLAND 1")
+    Model::Point.insert(:lon=>"151.25",:lat=>"-34.0",:name=>"ISLAND 2")
   end
   
-  it "Should download the data for today" do
+  it "Should get max and min lat,lon pairs  from the dabase" do
     
     max_lon = Model::Point.max_lon.to_s
     min_lon = Model::Point.min_lon.to_s
     max_lat = Model::Point.max_lat.to_s
     min_lat = Model::Point.min_lat.to_s
+
+#    puts "#{max_lon} -  #{min_lon} - #{max_lat} -  #{min_lat}"
     
-    (max_lon == "153.5" and min_lon == "145.25" and max_lat == "-34.0" and  min_lat == "-40.0").should == true
+    (max_lon == "151.25" and min_lon == "150.0" and max_lat == "-33.0" and  min_lat == "-34.0").should == true
   end
   
   

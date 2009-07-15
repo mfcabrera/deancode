@@ -109,7 +109,7 @@ class Wgrib2Frontend
     yconfig =  YAML.load_file(SETTINGS_FILE).merge!(config)
     exe = "#{yconfig['wgrib_path']}/#{yconfig['wgrib_name']}"
     raise "wgrib path does not exists - check settings.yml" if not File.exist?(exe)
-    command = "wgrib2 #{@filename} -csv -| "    
+    command = "wgrib2 #{@filename} -csv -| "  + " sed -e \"s\/[0-9]*:[0-9]*//\" | "  
     command << generate_grep_command       
   end
   
@@ -120,8 +120,9 @@ class Wgrib2Frontend
     
 
     #FIXME: Use Open4 to get the  data and save it directly
+    #Or use a more elegant way
     unless system(cmd) 
-      raise "Error creating .csv file" 
+      raise " Error creating .csv file - No output/Bad Point" 
     end
 
     true             
@@ -166,6 +167,7 @@ class ForecastZone
   attr_accessor :utc_offset #00,06,12,18
   
   def initialize(tlat,blat,llon,rlon,utc_offset=0)
+    utc_offset = utc_offset.to_i
     (@tlat,@blat,@rlon,@llon) = tlat.to_i,blat.to_i,rlon.to_i,llon.to_i
     if not [0,6,12,18].include?(utc_offset)
       raise "Invalid UTC offset"
@@ -310,41 +312,8 @@ end
   end
     
 
-  class Processor
-    
-    #this methods find the area from the list of points 
-    #it takes the minimum and the maximum latitude and longitude
-    #and creates a square that is passed to the download area.
-
-    def initialize
-    end
-    
-    
-    def perform(utc=0,date=nil)
-        
-      #Que the list of points
-      @points = Model::Point.find_all
-      
-      max_lon = Model::Point.max_lon.to_f + 1
-      min_lon = Model::Point.min_lon.to_f - 1
-      max_lat = Model::Point.max_lat.to_f + 1
-      min_lat = Model::Point.min_lat.to_f - 1
-      
-      zone = ForecastZone.new(max_lat,min_lat,min_lon,max_lon,utc) 
-      date = date || Date.today.strftime("%Y%m%d")
-      gd = GribDownloader.new(zone,date)
-      filename = gd.filename
-      gd.download
-
-      
-      wg = Wgrib2Frontend.new(filename,Model::Point.find_all.to_a,"#{filename}.csv")
-      wg.execute_wgrib2      
-      gdi = GribDataImporter.new
-      gdi.load_from_file("#{filename}.csv")
-      
-         
-    end        
-  end
+  
+  
   
 end
 

@@ -12,5 +12,5 @@ end
 
 desc "Run spec test"
 task :test  do
-  sh 'spec -f s forecast_downloader_spec.rb'
+  sh 'spec -f s spec/forecast_downloader_spec.rb'
 end
