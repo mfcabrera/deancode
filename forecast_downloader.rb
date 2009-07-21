@@ -299,12 +299,12 @@ end
     
     def insert_forecast(data)    
       
-      @dataset.insert(:grib_date => data[0],
-                     :forecast_date => data[1],
-                     :var_name => data[2],
-                     :lat => data[5],
-                     :lon => data[4],
-                     :value => data[6]
+      @dataset.insert(:grib_date => DateTime.parse(data[0].gsub(/:[01][0268]/,"")).to_s,
+                      :forecast_date => DateTime.parse(data[1]).to_s,
+                      :var_name => data[2],
+                      :lat => data[5],
+                      :lon => data[4],
+                      :value => data[6]
                      )
     end
     

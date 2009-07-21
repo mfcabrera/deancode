@@ -15,7 +15,7 @@ module ForecastDownloader
     DB = Sequel.connect(CONNECTION_STRING)
     class Forecast  < Sequel::Model(:forecasts)      
     end
+    
   end
+  
 end
-
-#ForecastDownloader::Model::Forecast.group_by(:forecast_date).each {|x| puts "#{x[:var_name]}  #{x[:value]}" }

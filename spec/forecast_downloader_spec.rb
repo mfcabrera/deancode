@@ -18,8 +18,8 @@ include ForecastDownloader
 
 describe Wgrib2Frontend  do
   before :each do
-    @outfile = "outfile.csv"
-    @filename="data_-33_152_-35_150_tz6.grib2"
+    @outfile = "spec/outfile.csv"
+    @filename="spec/data_-33_152_-35_150_tz6.grib2"
     points = [["-34","151.25"],["-34","152.5"]]
     @wgrib2 = Wgrib2Frontend.new(@filename,points,@outfile)
   end
@@ -31,7 +31,8 @@ it "should scape the dashes when generating a grep command for the coordinates" 
   end
   
   it "Should filter the locations I want from the wgrib2 command" do
-    @wgrib2.generate_command.should == "wgrib2 #{@filename} -csv -| egrep \"151.25,\\-34|152.5,\\-34\""  
+    @wgrib2.generate_command.should == "wgrib2 spec/data_-33_152_-35_150_tz6.grib2 -csv -|  sed -e \"s/[0-9]*:[0-9]*//\" | egrep \"151.25,\\-34|152.5,\\-34\"" 
+#"wgrib2 #{@filename} -csv -| egrep \"151.25,\\-34|152.5,\\-34\""  
   end
   
   it "Should output a csv file" do
