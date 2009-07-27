@@ -90,7 +90,7 @@ module ForecastDownloader
         surf_entry = Model::Forecast.new
         surf_entry.var_name="SURFZ"
         surf_entry.grib_date = sample.grib_date
-        surf_entry.forecast_date = sample.grib_date
+        surf_entry.forecast_date = sample.forecast_date
         surf_entry.lat = sample.lat
         surf_entry.lon = sample.lon
         surf_entry.value = surf_size
