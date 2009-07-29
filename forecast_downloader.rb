@@ -31,7 +31,7 @@ require 'logger'
 require 'singleton'
 require 'sequel'
 require 'faster_csv'
-
+require 'date'
 
 
 #Some Monkey Patches for String
@@ -43,6 +43,20 @@ class String
 
   def is_int?
     self =~ /^[-+]?[0-9]*$/
+  end
+end
+
+
+#Some patches for Time class
+class Time
+  def to_datetime
+    # Convert seconds + microseconds into a fractional number of seconds
+    seconds = sec + Rational(usec, 10**6)
+
+    # Convert a UTC offset measured in minutes to one measured in a
+    # fraction of a day.
+    offset = Rational(utc_offset, 60 * 60 * 24)
+    DateTime.new(year, month, day, hour, min, seconds, offset)
   end
 end
 

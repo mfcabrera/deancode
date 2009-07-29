@@ -1,0 +1,6 @@
+*.[oa]
+*.grib2
+*.log
+*.log*
+*.csv
+*.db

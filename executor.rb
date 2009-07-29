@@ -26,10 +26,15 @@ module ForecastDownloader
     
     def perform(utc=0,date=nil)
       
-      if not  ["0","6","12","18"].include?(utc)
+      if not  ["0","6","12","18"].include?(utc.to_s)
         raise ArgumentError, "UTC param should be one of [0,6,12,18]"
       end
-        
+
+     
+      if not Time.now.hour > utc
+        raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.hour}"        
+      end
+      
       
       #Que the list of points
       @points = Model::Point.find_all
@@ -40,7 +45,7 @@ module ForecastDownloader
       min_lat = Model::Point.min_lat.to_f - 1
       
       zone = ForecastZone.new(max_lat,min_lat,min_lon,max_lon,utc) 
-      date = date || Date.today.strftime("%Y%m%d")
+      date = date || Time.now.to_datetime.strftime("%Y%m%d")
 
       @log.info("Downloadimg forecast for #{date} calculated in UTC: #{utc}")
       

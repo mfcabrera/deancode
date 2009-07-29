@@ -5,9 +5,12 @@ This is a application to download grib files from nomads service, process them a
 put them into a database
 
 == DEPS
+sqlite-dev
+sqlite gem
+spec gem
 libcurl-dev
 curb gem
-faster_csv gem
+fastercsv gem
 sequel gem
 wgrib2
 
