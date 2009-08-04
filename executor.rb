@@ -31,7 +31,7 @@ module ForecastDownloader
       end
 
      
-      if not Time.now.hour >= utc
+      if not Time.now.hour >= utc.to_i
         raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.hour}"        
       end
       
