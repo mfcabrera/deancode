@@ -45,6 +45,8 @@ module ForecastDownloader
       min_lat = Model::Point.min_lat.to_f - 1
       
       zone = ForecastZone.new(max_lat,min_lat,min_lon,max_lon,utc) 
+      
+      #fixme, validate the format of date
       date = date || Time.now.to_datetime.strftime("%Y%m%d")
 
       @log.info("Downloadimg forecast for #{date} calculated in UTC: #{utc}")
