@@ -21,6 +21,7 @@ module ForecastDownloader
     def initialize
       @log = MyLogger.instance
       @surf_calc = SurfSizeCalculator.new
+      @swclas_calc = SwellClassCalculator.new
     end
     
     
@@ -30,9 +31,10 @@ module ForecastDownloader
         raise ArgumentError, "UTC param should be one of [0,6,12,18]"
       end
 
-     
-      if not Time.now.hour >= utc.to_i
-        raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.hour}"        
+      if date.nil?
+        if Time.now.hour < utc.to_i
+          raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.hour}"
+        end
       end
       
       
@@ -44,11 +46,25 @@ module ForecastDownloader
       max_lat = Model::Point.max_lat.to_f + 1
       min_lat = Model::Point.min_lat.to_f - 1
       
+      
+      hour = Time.now.utc.hour
+      nhour =Time.now.hour
+
+      if date.nil?
+        if ((Time.now.utc.yday > Time.now.yday) and (hour > utc + 5))
+          date =  Time.now.utc.to_datetime.strftime("%Y%m%d")
+        else
+          date =  Time.now.to_datetime.strftime("%Y%m%d")
+          utc = [0,6,12,18].find {|t| t > nhour } || 18
+        end
+      end
+      
       zone = ForecastZone.new(max_lat,min_lat,min_lon,max_lon,utc) 
       
-      #fixme, validate the format of date
-      date = date || Time.now.to_datetime.strftime("%Y%m%d")
+      #FIXME validate the format of date or expect a Date object
+        
 
+      
       @log.info("Downloadimg forecast for #{date} calculated in UTC: #{utc}")
       
       gd = GribDownloader.new(zone,date)
@@ -59,21 +75,22 @@ module ForecastDownloader
       wg.execute_wgrib2      
       gdi = GribDataImporter.new
       gdi.load_from_file("#{filename}.csv")      
-      calculate_surf_size
+      calculate_derived_measures
          
     end        
     
-    def calculate_surf_size()
+    def calculate_derived_measures()
       #FIXME GET THE RIGHT VALUES HERE CREATE THE CALCULATION
      
-      @log.info("Calculating the surf size for the forecast")
-      fdates =   Model::Forecast.select(:forecast_date).order(:forecast_date).distinct.to_a
+      @log.info("Calculating the surf size and swell class  for the forecast")
+      fdates =   Model::Forecast.select(:forecast_date,:lat,:lon).order(:forecast_date).distinct.to_a
       fdates.each do |fd| 
         
-        x = Model::Forecast.filter('forecast_date = ?',fd.forecast_date)
+        x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date,fd.lat,fd.lon).to_a
+        #x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date)
         h_0 = p = nil
         x.each do |forecast|
-        
+          
           
         #  puts forecast.var_name
           if forecast.var_name == "HTSGW"
@@ -88,11 +105,13 @@ module ForecastDownloader
         if h_0.nil? or p.nil?
           raise "Error, HTSGW or PERPW not properly defined for this  forecast"
         end
+        
 
         #Let's calculate the surf size and create a new forecast entry
         surf_size = @surf_calc.calculate(h_0,p)
+        swell_class = @swclas_calc.calculate(h_0,p)
         
-        #Copy over the same values from one of the Forecasts
+        #Copy over the same values from one of the Forecasts for Surf Size
         sample = x.to_a[0]
         surf_entry = Model::Forecast.new
         surf_entry.var_name="SURFZ"
@@ -102,11 +121,24 @@ module ForecastDownloader
         surf_entry.lon = sample.lon
         surf_entry.value = surf_size
         surf_entry.save
+
+        #Copy over the same values from one of the Forecasts for Swell Class
+        swell_class_entry = Model::Forecast.new
+        swell_class_entry.var_name="SWELLC"
+        swell_class_entry.grib_date = sample.grib_date
+        swell_class_entry.forecast_date = sample.forecast_date
+        swell_class_entry.lat = sample.lat
+        swell_class_entry.lon = sample.lon
+        swell_class_entry.value = swell_class
+        swell_class_entry.save
+
+
+
         # @log.info("Surf Size for #{surf_entry.forecast_date} = #{surf_size}")      
       end
     
 
-      @log.info("surf Size Calculation process finished")
+      @log.info("Surf size and swell calculation  process finished")
     end    
     
   end

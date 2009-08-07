@@ -8,6 +8,10 @@ task :migrate  do
   system %{sequel -E  -m migrations/   sqlite://gribdata-test.db}
 end
 
+task :migrate_down  do
+  system %{sequel -E -M0  -m migrations/   sqlite://gribdata.db}
+  system %{sequel -E -M0  -m migrations/   sqlite://gribdata-test.db}
+end
 
 
 desc "Run spec test"

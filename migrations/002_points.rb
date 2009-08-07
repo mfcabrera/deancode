@@ -1,7 +1,7 @@
 
 class CreatePointsDataTable < Sequel::Migration
-
-    # For the up we want to create the three tables.
+  
+  # For the up we want to create the three tables.
   def up
     # Create the books table with a primary key and a title.
     Sequel.datetime_class = DateTime    
@@ -10,6 +10,7 @@ class CreatePointsDataTable < Sequel::Migration
       Float  :lat
       Float  :lon
       String :name
+      Float :throttle
     end    
   end
   
@@ -17,5 +18,5 @@ class CreatePointsDataTable < Sequel::Migration
   def down
     drop_table :forecast_points
   end
-
+  
 end

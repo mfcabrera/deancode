@@ -10,8 +10,24 @@ if  ["0","6","12","18","last"].include?(utc)
   pr =  ForecastDownloader::Executor.new
   if utc == "last"
     #try to get the current utc offset
-    hour = Time.now.utc.hour 
-    utc = [0,6,12,18].find {|t| t <= hour } || 18
+    if date.nil? #we try to select the adequate params
+      
+      utday = Time.now.utc.day
+      day = Time.now.day
+      umonth = Time.now.utc.month
+      umonth = Time.now.month
+      
+      
+      hour = Time.now.utc.hour 
+      
+      utc = [0,6,12,18].find {|t| t > hour-6 } || 18
+      
+      puts utc
+      
+    else
+      raise "You should specify a numeric UTC when specifying the date"
+      
+    end
   end
   if(date.nil?)
     pr.perform(utc)
@@ -19,5 +35,5 @@ if  ["0","6","12","18","last"].include?(utc)
     pr.perform(utc,date)    
   end
 else
-    raise ArgumentError, "UTC param should be one of [0,6,12,18,last]"
+  raise ArgumentError, "UTC param should be one of [0,6,12,18,last]"
 end

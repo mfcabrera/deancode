@@ -15,6 +15,14 @@ module ForecastDownloader
     end
 
   end
+
+  #FIXME: Move me or rename the file (Actually rename and move the file)
+  class SwellClassCalculator
+    
+    def calculate(ss,sp)
+      ss*sp
+    end    
+  end
   
 end
 
