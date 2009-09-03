@@ -8,5 +8,4 @@ db:
         dev: sqlite://gribdata.db 
         test: sqlite://gribdata-test.db
         prod: sqlite://gribdata-prod.db
-db_log_file: log/sequel.log
-    
+db_log_file: STDOUT

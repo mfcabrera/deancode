@@ -1,0 +1,13 @@
+# -*- mode: org -*-
+#+TITLE:     TODO
+#+SEQ_TODO:  TODO FIXME WAITING | DONE CANCELLED MAYBE PARTIAL
+#+DRAWERS:   SNIP
+#+CATEGORY:  deancode
+
+List of tasks for deancode
+
+
+* TODO Create the posibility of defining the points (at least the cornes of the rectangles) that define the zone from the command line (decouple it from the db)
+* TODO Refactor the code to make it more organized (especially the module)
+* FIXME  remove the constant duplication and put them in the top module for the model clasess
+* TODO Fix the date/utc automatic selection

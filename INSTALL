@@ -1,0 +1,18 @@
+* Installation Notes
+This is a check list for the instalation.
+
+* Forecast Rails APP
+  - Fresh rake gem (sudo apt-get remove rake && sudo gem install rake)
+* Deancode (ForecastDownloader)
+  - gem install fastercsv
+  - gem install sequel
+  - sqlite3-dev package
+  - libsqlite3-ruby package
+  - gem install sqlite3
+  - apt-get install libcurl-dev
+  - gam install curb
+  - gem install 
+  - wgrib installation
+
+
+

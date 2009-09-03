@@ -3,6 +3,13 @@ require 'forecast_downloader'
 require 'executor'
 #Runs the executor
 
+if ARGV.size < 1
+  puts "usage: #{$0} <utc> [<date>]"
+  puts "utc: the utc value for the NOAA calculatiion,  one of [0 6 12 18]."
+  puts "date: in yyyymmdd format."
+  exit
+end
+
 utc = ARGV[0]
 date = ARGV[1]
 
@@ -16,11 +23,9 @@ if  ["0","6","12","18","last"].include?(utc)
       day = Time.now.day
       umonth = Time.now.utc.month
       umonth = Time.now.month
-      
-      
       hour = Time.now.utc.hour 
       
-      utc = [0,6,12,18].find {|t| t > hour-6 } || 18
+      utc = [0,6,12,18].find {|t| t > hour - 6 } || 18
       
       puts utc
       

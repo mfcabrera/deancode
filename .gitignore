@@ -1,6 +1,9 @@
 *.[oa]
+*.csv
+*.db
 *.grib2
 *.log
 *.log*
-*.csv
-*.db
+/STDOUT
+/TAGS
+/crontab

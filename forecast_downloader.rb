@@ -203,20 +203,24 @@ class GribDownloader
   
   attr_reader :url
   attr_reader :filename
-  
+  attr_reader :noaa_file_name
+  attr_reader :date
+  attr_reader :zone
   
   #date in format YYYYMMDD
   def initialize(zone,date,config={})
     @date = date
     @zone = zone
-    @filename =  "data_#{@zone.tlat}_#{@zone.rlon}_#{@zone.blat}_#{@zone.llon}_tz#{@zone.utc_offset}.grib2"
+    @filename="nww3.t#{@zone.utc_offset}z.grib.grib2"
     yconfig = YAML.load_file(SETTINGS_FILE).merge!(config) 
     @urlroot =  yconfig["urlroot"]    
     loglevel  = yconfig["log_level"]
     logfile = yconfig["log_file"]
     @log = MyLogger.instance
     @log.level = loglevel
+    
     @url = generate_url 
+    
     @log.debug("URL Generarted: {@url}")
     
     @log.debug("Filename: #{filename}")
@@ -291,17 +295,25 @@ end
     # This class  Imports data from CSV files into
     # The database
     
-    def initialize
+    def initialize(noaa_filename=nil,date=nil)
+      @noaa_filename = noaa_filename || "nww3.t00z.grib.grib2"
+      @date = date || DateTime.now.strftime("%Y%m%d").to_s
       @log = MyLogger.instance
       Sequel.datetime_class = DateTime
       yconfig =  YAML.load_file(SETTINGS_FILE)
       @DB =  Sequel.connect(yconfig["db"]["test"],:logger => Logger.new(yconfig["db_log_file"]))           
       
-      
+      @DB[:grib_meta].delete
+      @DB[:grib_meta].insert(:noaa_filename =>@noaa_filename,:grib_date =>@date)
+
       @dataset = @DB[:forecasts]            
     end
       #Read from a CSV file
+
     def load_from_file(file)
+      
+      
+      
       @log.info("Deleting previous forecasts from forecast table")
       @dataset.delete
       @log.info("Loading new forecasts from file: #{file}")

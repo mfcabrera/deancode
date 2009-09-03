@@ -1,0 +1,4 @@
+== Instalacion y Ejecución
+
+Luego de instalar las librerias se debe ejecutar el comando runner.rb
+Hay que tener en cuenta que los puntos de donde crea la zona a descargar estan en la base de datos en la tabla forecast_points. Asi que estos deben ser llenadas previamente (existira una interfaz grafica para esto). Esto no es lo optimo pero es como esta. Se deberia poner una opcion para leerlos desde la linea de comando pero bueno ya queda como hacer.

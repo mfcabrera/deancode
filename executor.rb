@@ -47,15 +47,15 @@ module ForecastDownloader
       min_lat = Model::Point.min_lat.to_f - 1
       
       
-      hour = Time.now.utc.hour
-      nhour =Time.now.hour
+      hour  = Time.now.utc.hour
+      nhour = Time.now.hour
 
       if date.nil?
-        if ((Time.now.utc.yday > Time.now.yday) and (hour > utc + 5))
+        if ((Time.now.utc.yday > Time.now.yday) and (hour > utc.to_i + 5))
           date =  Time.now.utc.to_datetime.strftime("%Y%m%d")
         else
           date =  Time.now.to_datetime.strftime("%Y%m%d")
-          utc = [0,6,12,18].find {|t| t > nhour } || 18
+          #utc = [0,6,12,18].find {|t| t > nhour } || 18
         end
       end
       
@@ -73,7 +73,7 @@ module ForecastDownloader
 
       wg = Wgrib2Frontend.new(filename,Model::Point.find_all.to_a,"#{filename}.csv")
       wg.execute_wgrib2      
-      gdi = GribDataImporter.new
+      gdi = GribDataImporter.new(filename,date)
       gdi.load_from_file("#{filename}.csv")      
       calculate_derived_measures
          
@@ -85,25 +85,44 @@ module ForecastDownloader
       @log.info("Calculating the surf size and swell class  for the forecast")
       fdates =   Model::Forecast.select(:forecast_date,:lat,:lon).order(:forecast_date).distinct.to_a
       fdates.each do |fd| 
-        
+
         x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date,fd.lat,fd.lon).to_a
         #x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date)
         h_0 = p = nil
+        wvper = perpw = persw = nil
         x.each do |forecast|
           
-          
-        #  puts forecast.var_name
+
           if forecast.var_name == "HTSGW"
             h_0 = forecast.value            
           end
-          if forecast.var_name == "PERPW"
-            p = forecast.value
+          
+          #we chose one of these period based if the appear
+          #in this seame order
+
+          if forecast.var_name == "PERPW" 
+            perpw = forecast.value
           end                    
           
+          if forecast.var_name == "PERSW" 
+            persw = forecast.value
+          end                    
+          
+          if forecast.var_name == "WVPER" 
+            wvper = forecast.value
+          end                    
+        
+          
         end
+
+        p = perpw || persw || wvper 
+
         
         if h_0.nil? or p.nil?
-          raise "Error, HTSGW or PERPW not properly defined for this  forecast"
+          #raise  "HTSGW or PERPW not properly defined for this  forecast"
+          @log.warn "HTSGW or PERPW not properly defined for this  forecast"
+          p = p || 0.0
+          h_0 = h_0 || 0.0
         end
         
 
@@ -132,8 +151,7 @@ module ForecastDownloader
         swell_class_entry.value = swell_class
         swell_class_entry.save
 
-
-
+        
         # @log.info("Surf Size for #{surf_entry.forecast_date} = #{surf_size}")      
       end
     
