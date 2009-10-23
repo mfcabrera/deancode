@@ -30,11 +30,17 @@ module ForecastDownloader
       if not  ["0","6","12","18"].include?(utc.to_s)
         raise ArgumentError, "UTC param should be one of [0,6,12,18]"
       end
+      
+      nowt = Time.now
+      utct = Time.now.utc
+      utc_key = "#{utct.year}#{utct.month}#{utct.day}".to_i
+      now_key = "#{nowt.year}#{nowt.month}#{nowt.day}".to_i
 
       if date.nil?
-        if Time.now.hour < utc.to_i
-          raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.hour}"
-        end
+        if  utc_key == now_key and utct.hour < utc.to_i
+          raise ArgumentError, "requested forecast generation time cannot be
+        in the future #{utc} >  #{Time.now.utc.hour}"  
+        end        
       end
       
       

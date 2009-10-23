@@ -24,8 +24,21 @@ if  ["0","6","12","18","last"].include?(utc)
       umonth = Time.now.utc.month
       umonth = Time.now.month
       hour = Time.now.utc.hour 
+
+      nowt = Time.now
+      utct = Time.now.utc
+      utc_key = "#{utct.year}#{utct.month}#{utct.day}".to_i
+      now_key = "#{nowt.year}#{nowt.month}#{nowt.day}".to_i
+
+      if utc_key > now_key
+        hour = hour + 12
+      end
       
-      utc = [0,6,12,18].find {|t| t > hour - 6 } || 18
+      if utc_key < now_key
+        hour = hour - 12
+      end
+      
+      utc = [0,6,12,18].find {|t| t >= hour  } || 18
       
       puts utc
       

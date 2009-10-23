@@ -7,7 +7,7 @@ module ForecastDownloader
     
     def calculate(h_0,p)
       h_b = ( h_0**(4.0/5.0) ) * (((1/(Math.sqrt(G))))*(G*p/4*Math::PI))**(2.0/5.0) 
-      h_surf =  h_b * k_r(h_b)
+      h_surf =  h_b * k_r(h_b) * 0.50
     end
     
     def k_r(hb)
