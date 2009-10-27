@@ -10,7 +10,8 @@ class CreatePointsDataTable < Sequel::Migration
       Float  :lat
       Float  :lon
       String :name
-      Float :throttle
+      Float :upper_throttle
+      Float :lower_throttle
     end    
   end
   

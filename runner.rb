@@ -38,7 +38,7 @@ if  ["0","6","12","18","last"].include?(utc)
         hour = hour - 12
       end
       
-      utc = [0,6,12,18].find {|t| t >= hour  } || 18
+      utc = [0,6,12,18].reverse.find {|t| t < hour  } || 18
       
       puts utc
       

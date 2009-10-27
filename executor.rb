@@ -38,8 +38,7 @@ module ForecastDownloader
 
       if date.nil?
         if  utc_key == now_key and utct.hour < utc.to_i
-          raise ArgumentError, "requested forecast generation time cannot be
-        in the future #{utc} >  #{Time.now.utc.hour}"  
+          raise ArgumentError, "requested forecast generation time cannot be in the future #{utc} >  #{Time.now.utc.hour}"  
         end        
       end
       
