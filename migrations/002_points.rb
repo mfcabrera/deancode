@@ -12,6 +12,7 @@ class CreatePointsDataTable < Sequel::Migration
       String :name
       Float :upper_throttle
       Float :lower_throttle
+      Integer :utc
     end    
   end
   

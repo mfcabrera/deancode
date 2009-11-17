@@ -12,10 +12,10 @@ class CreateGribDataTable < Sequel::Migration
       String :var_name
       String :lat
       String :lon
-      Float  :value            
+      Float  :value                  
     end    
   end
-  
+
   # For the down we want to remove the three tables.
   def down
     drop_table :forecasts
