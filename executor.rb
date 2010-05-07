@@ -91,29 +91,33 @@ module ForecastDownloader
       fdates =   Model::Forecast.select(:forecast_date,:lat,:lon).order(:forecast_date).distinct.to_a
       fdates.each do |fd| 
 
-        x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date,fd.lat,fd.lon).to_a
-        #x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date)
+        x = Model::DB[:forecasts].filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date.to_s,fd.lat,fd.lon).to_a
+        #x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon =
+        #?',fd.forecast_date)
+        if x.to_a.length < 1
+          raise "X should be an empty array"
+        end
+
         h_0 = p = nil
         wvper = perpw = persw = nil
         x.each do |forecast|
           
-
-          if forecast.var_name == "HTSGW"
+          if forecast["var_name"]== "HTSGW"
             h_0 = forecast.value            
           end
           
           #we chose one of these period based if the appear
           #in this seame order
 
-          if forecast.var_name == "PERPW" 
+          if forecast["var_name"] == "PERPW" 
             perpw = forecast.value
           end                    
           
-          if forecast.var_name == "PERSW" 
+          if forecast["var_name"] == "PERSW" 
             persw = forecast.value
           end                    
           
-          if forecast.var_name == "WVPER" 
+          if forecast["var_name"] == "WVPER" 
             wvper = forecast.value
           end                    
         
@@ -139,20 +143,20 @@ module ForecastDownloader
         sample = x.to_a[0]
         surf_entry = Model::Forecast.new
         surf_entry.var_name="SURFZ"
-        surf_entry.grib_date = sample.grib_date
-        surf_entry.forecast_date = sample.forecast_date
-        surf_entry.lat = sample.lat
-        surf_entry.lon = sample.lon
+        surf_entry.grib_date = sample["grib_date"]
+        surf_entry.forecast_date = sample["forecast_date"]
+        surf_entry.lat = sample["lat"]
+        surf_entry.lon = sample["lon"]
         surf_entry.value = surf_size
         surf_entry.save
 
         #Copy over the same values from one of the Forecasts for Swell Class
         swell_class_entry = Model::Forecast.new
         swell_class_entry.var_name="SWELLC"
-        swell_class_entry.grib_date = sample.grib_date
-        swell_class_entry.forecast_date = sample.forecast_date
-        swell_class_entry.lat = sample.lat
-        swell_class_entry.lon = sample.lon
+        swell_class_entry.grib_date = sample["grib_date"]
+        swell_class_entry.forecast_date = sample["forecast_date"]
+        swell_class_entry.lat = sample["lat"]
+        swell_class_entry.lon = sample["lon"]
         swell_class_entry.value = swell_class
         swell_class_entry.save
 
