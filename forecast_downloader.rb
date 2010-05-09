@@ -65,6 +65,7 @@ end
 module ForecastDownloader
 
 SETTINGS_FILE="settings.yml"
+YCONFIG =  YAML.load_file(SETTINGS_FILE)
 
 class MyLogger
   include Singleton
@@ -72,7 +73,7 @@ class MyLogger
   #Move this were appropiate
   def initialize
     
-    yconfig =  YAML.load_file(SETTINGS_FILE)
+    yconfig = ForecastDownloader::YCONFIG
     @log_file =  yconfig["log_file"]
     if @log_file == "STDOUT"
       @logger = Logger.new(STDOUT, 'weekly')

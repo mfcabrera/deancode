@@ -4,7 +4,7 @@ class CreateGribDataTable < Sequel::Migration
     # For the up we want to create the three tables.
   def up
     # Create the books table with a primary key and a title.
-    Sequel.datetime_class = DateTime    
+    Sequel.datetime_class = DateTime
     create_table :forecasts do
       primary_key :id
       DateTime  :grib_date

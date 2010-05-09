@@ -8,6 +8,7 @@ require 'forecast_downloader'
 require 'model/point'
 require 'model/forecast'
 require 'surf_size_calculator'
+require 'ap'
 include ForecastDownloader
 
 module ForecastDownloader
@@ -86,39 +87,41 @@ module ForecastDownloader
     
     def calculate_derived_measures()
       #FIXME GET THE RIGHT VALUES HERE CREATE THE CALCULATION
-     
+
+           
       @log.info("Calculating the surf size and swell class  for the forecast")
       fdates =   Model::Forecast.select(:forecast_date,:lat,:lon).order(:forecast_date).distinct.to_a
-      fdates.each do |fd| 
 
+
+      fdates.each do |fd| 
         x = Model::DB[:forecasts].filter('forecast_date = ? and lat = ? and lon = ?',fd.forecast_date.to_s,fd.lat,fd.lon).to_a
         #x = Model::Forecast.filter('forecast_date = ? and lat = ? and lon =
         #?',fd.forecast_date)
         if x.to_a.length < 1
-          raise "X should be an empty array"
+          raise "X shoulnt be an empty array"
         end
 
         h_0 = p = nil
         wvper = perpw = persw = nil
         x.each do |forecast|
           
-          if forecast["var_name"]== "HTSGW"
-            h_0 = forecast.value            
+          if forecast[:var_name]== "HTSGW"
+            h_0 = forecast[:value]            
           end
           
           #we chose one of these period based if the appear
           #in this seame order
 
-          if forecast["var_name"] == "PERPW" 
-            perpw = forecast.value
+          if forecast[:var_name] == "PERPW" 
+            perpw = forecast[:value]
           end                    
           
-          if forecast["var_name"] == "PERSW" 
-            persw = forecast.value
+          if forecast[:var_name] == "PERSW" 
+            persw = forecast[:value]
           end                    
           
-          if forecast["var_name"] == "WVPER" 
-            wvper = forecast.value
+          if forecast[:var_name] == "WVPER" 
+            wvper = forecast[:value]
           end                    
         
           
@@ -140,26 +143,26 @@ module ForecastDownloader
         swell_class = @swclas_calc.calculate(h_0,p)
         
         #Copy over the same values from one of the Forecasts for Surf Size
+        # puts x
         sample = x.to_a[0]
-        surf_entry = Model::Forecast.new
-        surf_entry.var_name="SURFZ"
-        surf_entry.grib_date = sample["grib_date"]
-        surf_entry.forecast_date = sample["forecast_date"]
-        surf_entry.lat = sample["lat"]
-        surf_entry.lon = sample["lon"]
-        surf_entry.value = surf_size
-        surf_entry.save
 
-        #Copy over the same values from one of the Forecasts for Swell Class
-        swell_class_entry = Model::Forecast.new
-        swell_class_entry.var_name="SWELLC"
-        swell_class_entry.grib_date = sample["grib_date"]
-        swell_class_entry.forecast_date = sample["forecast_date"]
-        swell_class_entry.lat = sample["lat"]
-        swell_class_entry.lon = sample["lon"]
-        swell_class_entry.value = swell_class
-        swell_class_entry.save
-
+        Model::DB[:forecasts].insert( 
+                                    :var_name=>"SURFZ",
+                                    :grib_date=>sample[:grib_date].to_s,
+                                    :forecast_date=>sample[:forecast_date].to_s,
+                                    :lat => sample[:lat],
+                                    :lon => sample[:lon],
+                                    :value => surf_size
+                                    )
+                                    
+         Model::DB[:forecasts].insert( 
+                                    :var_name=>"SWELLC",
+                                    :grib_date=>sample[:grib_date].to_s,
+                                    :forecast_date=>sample[:forecast_date].to_s,
+                                    :lat => sample[:lat],
+                                    :lon => sample[:lon],
+                                    :value => swell_class
+                                    )
         
         # @log.info("Surf Size for #{surf_entry.forecast_date} = #{surf_size}")      
       end
