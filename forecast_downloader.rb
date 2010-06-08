@@ -302,7 +302,7 @@ end
       @log = MyLogger.instance
       Sequel.datetime_class = DateTime
       yconfig =  YAML.load_file(SETTINGS_FILE)
-      @DB =  Sequel.connect(yconfig["db"]["test"],:logger => Logger.new(yconfig["db_log_file"]))           
+      @DB =  Sequel.connect(yconfig["db"][yconfig["env"]],:logger => Logger.new(yconfig["db_log_file"]))           
       
       @DB[:grib_meta].delete
       @DB[:grib_meta].insert(:noaa_filename =>@noaa_filename,:grib_date =>@date)

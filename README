@@ -15,3 +15,5 @@ sequel gem
 wgrib2
 
 
+
+libmysql-ruby1.8

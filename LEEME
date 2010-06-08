@@ -1,4 +1,17 @@
-== Instalacion y Ejecución
+== Install and Run
 
-Luego de instalar las librerias se debe ejecutar el comando runner.rb
-Hay que tener en cuenta que los puntos de donde crea la zona a descargar estan en la base de datos en la tabla forecast_points. Asi que estos deben ser llenadas previamente (existira una interfaz grafica para esto). Esto no es lo optimo pero es como esta. Se deberia poner una opcion para leerlos desde la linea de comando pero bueno ya queda como hacer.
+1. Install wgrib2
+2. Server needs Ruby 1.8 and MySQL 5.x
+3. Install depencies (SEE INSTALL and README) 
+4. go on deancode directory (downloader) and run 
+   - rake migrate_mysql
+5. go to the rails application root and run rake db:migrate
+6. Set-up the cronjobs  to run the runner every 6 hours
+   the runner:
+   usage: runner.rb <utc> [<date>]
+   utc is mandatory and it has to be one of: [0 6 12 18]
+   date is optional if you want to specify a date (if not specified it will use today as the date)
+
+7. Go to  http://www.yourhost.com/forecast_points/ <- Admin interface
+8. http://localhost:3000/forecast/view?lat=-34.0&lon=151.25 to get the forecast for lat -34.0 and lon 151.25
+the lat and lon have to always contain the decimal point. So -34 have to be -34.0.
