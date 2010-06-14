@@ -3,6 +3,7 @@ This is a check list for the instalation.
 
 * Forecast Rails APP
   - Fresh rake gem (sudo apt-get remove rake && sudo gem install rake)
+  - libmysql-ruby
 * Deancode (ForecastDownloader)
   - gem install fastercsv
   - gem install sequel

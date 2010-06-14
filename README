@@ -13,7 +13,4 @@ curb gem
 fastercsv gem
 sequel gem
 wgrib2
-
-
-
 libmysql-ruby1.8
