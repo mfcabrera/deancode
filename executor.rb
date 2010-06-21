@@ -57,7 +57,7 @@ module ForecastDownloader
       nhour = Time.now.hour
 
       if date.nil?
-        if (utc_key > now_key)
+        if (now_key < utc_key )
           date =  Time.now.utc.to_datetime.strftime("%Y%m%d")
         else
           date =  Time.now.to_datetime.strftime("%Y%m%d")
